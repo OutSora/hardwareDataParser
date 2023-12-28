@@ -1,4 +1,5 @@
 import os
+import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -8,8 +9,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import urllib.request
-
-# headers = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 current_dir = os.getcwd()
 folder_name = "chromedriver"
@@ -41,9 +40,6 @@ for key in hardwares.keys():
         search.send_keys(hardwares[key])
         driver.implicitly_wait(20)
         element = WebDriverWait(driver, 5).until(
-            # /div[1{номер элемента списка}]/div/a/div/div/div[1]/div[1]/img[@class='CardImageSlider_image__W65ZP']
-            # Icons_search_Eydlv Search_searchIcon__ipNH0 Search_activeSearchIcon__HxnXX - активная
-            # Icons_search__Eydlv Search_searchIcon__ipNH0 - не активная
             EC.presence_of_element_located((By.XPATH,
                                             f"//div[1]/div/div[2]/div/*[name()='svg' and @class='Icons_search__Eydlv Search_searchIcon__ipNH0 Search_activeSearchIcon__HxnXX']"))
         )
@@ -52,14 +48,15 @@ for key in hardwares.keys():
         driver.execute_script("window.scrollBy(0,140)", "")
         driver.execute_script("window.scrollBy(0,140)", "")
         driver.implicitly_wait(20)
+        
     item_number = 1
     component_number = 0
+    
     while item_number != 6:
         driver.implicitly_wait(20)
         while True:
             try:
                 element = WebDriverWait(driver, 5).until(
-                    # /div[1{номер элемента списка}]/div/a/div/div/div[1]/div[1]/img[@class='CardImageSlider_image__W65ZP']
                     EC.presence_of_element_located((By.XPATH,
                                                     f"//div[{item_number}]/div/a/div/div/div[1]/div[1]/img[@class='CardImageSlider_image__W65ZP']"))
                 )
@@ -88,14 +85,11 @@ for key in hardwares.keys():
             number = image.get_attribute('src').split("/")
             if "https://www.regard.ru/api/site/cacheimg/goods" in image.get_attribute('src') and int(number[-1]) == 62:
                 component_images.append(image.get_attribute('src'))
-            print(image.get_attribute('src'))
-
-        print("#" * 100)
-        print(component_images)
 
         filename = hardwares[key]
         count = 0
         filenames_list = []
+        
         for i in range(len(component_images)):
             urllib.request.urlretrieve(component_images[i], f"components_image/{filename}_{component_number}-{i}.png")
             filenames_list.append(f"{filename}_{component_number}-{i}.png")
@@ -108,11 +102,8 @@ for key in hardwares.keys():
         for filename in filenames_list:
             component_data += f"{filename}\n"
 
-        print(f"Название: {title}")
-        print(f"Цена: {price}")
         data = characteristics.split("\n")
         count = 0
-        print(data)
         header = data[0]
         component_data += "Характеристики:\n"
         component_data += f"---{header}---\n"
@@ -128,7 +119,6 @@ for key in hardwares.keys():
             else:
                 count = 0
 
-        print(index_list)
         count = 0
         for i in range(1, len(data)):
             for j in range(len(index_list)):
@@ -155,4 +145,7 @@ for key in hardwares.keys():
 
 components_file.write(component_data)
 components_file.close()
-print(characteristic_list)
+
+os.system("python createCSV.py")
+time.sleep(5)
+os.system("python CsvDownloader.py")
